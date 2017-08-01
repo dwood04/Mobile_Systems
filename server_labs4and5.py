@@ -26,7 +26,6 @@ USE_CHAN_SIM=False#COMP28512 lab4 (False), lab5 (True)
 # - Can not fully cleanly kill the server. Threads still pending. When a thread terminates (via class.kill) connection stays open until client presses enter (or similar). Thread blocks on 'data = self.clientsock.recv(BUFF)'.
 # - Channel is not as transparent as I'd like. Clients should be able to make multiple channel sockets to simulate direct connections. Not implemented.
 # - UDP not fully implemented/tested
-# - No bursty errors
 #
 ###
 
@@ -441,7 +440,6 @@ class ClientThread(threading.Thread):
         self.username=data;
         inviteDB[self.username] = []
         whoDB[self.username] = {'socket':self.clientsock,'ip':self.addr[0],'port':self.addr[1]}
-
         return
 
 
@@ -567,7 +565,7 @@ class ClientThread(threading.Thread):
                 #If talking to barrybot, give 'from' so it can respond
                 if msgwho == "BarryBot5":
                     print "This is running!"
-                    mangledMsg = typeid + self.username+" "+mangledMsg
+                    mangledMsg = typeid + "MSG " + self.username+" "+mangledMsg
                     print mangledMsg
 
                 print "Message is going to %s"%msgwho
