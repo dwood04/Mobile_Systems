@@ -6,11 +6,7 @@
 #----- ----- ----- ----- ----- ----- ----- ----
 from socket import *
 import select
-import threading
-import time
-import datetime
 import re
-import traceback
 import sys
 import random
 import binascii
@@ -22,7 +18,6 @@ REPEAT_MSG = "Sent by BarryBot, School of Computer Science, The University of Ma
 # Fixed key for testing:
 KEY = "1<AK8JNZBCHXUHCV1A?BYSE8PQW485M=XIK84MATON2NYYNU9KLWHBQO=PWPF<TE=L5SY601I1"
 KEY_LEN = len(REPEAT_MSG)
-
 
 class BarryBot(object):
 
@@ -36,17 +31,13 @@ class BarryBot(object):
         self.svr.connect((self.host, self.server_port))
         self.socklst.append(self.svr)
 
-    def main_loop(self):
+    def monitor_sockets(self):
 
         if len(sys.argv) == 2:
             self.host = sys.argv[1]
 
-        # Set up socket connections
-
         # This would be used if you wanted a random key every time you run barryBot
         KEY = genRandStr(KEY_LEN)
-        # else KEY is statically defined
-        # print "KEY is ",KEY
 
         # Register barrybot
         self.svr.send("REGISTER BarryBot5")
@@ -55,44 +46,45 @@ class BarryBot(object):
             while True:
                 ready_socks, _, _ = select.select([self.svr], [], [])
                 for sock in ready_socks:
-                    # Grab the ip and port values of this socket (we do not know which one it is yet)
-                    #iip,pport = sock.getpeername()#
-                    data = sock.recv(self.buff_size)
-                    message_type = data.split(" ", 1)[0]
-                    # If Socket closed
-                    if not data:
-                        sock.close()
-                        print "Socket connection lost - Exiting BarryBot"
-                        sys.exit()
-
-                    print "SERVER PORT :", data
-                    msg2_regex = re.compile("[0-5]MSG")
-                    print("Message Type: %s" % message_type)
-
-                    if message_type == "INVITE":
-                        self.accept(sock, data)
-                    elif message_type == "MSG":  # Keeping MSG for debugging
-                        self.msg(sock, data)
-
-                    elif msg2_regex.match(message_type):
-                        print("Code gets here")
-                        kind, sender, content = data.split(" ", 2)
-                        if "ENCRYPT" in content.upper() and len(content) <= 9:
-                            self.encrypt(sock, sender)
-
-                        else:
-                            data = "BarryBot5 (via channel): " + data
-                            sock.send("0MSG " + sender + " " + content + "\n")
-
+                    self.process_received_data(sock)
         except KeyboardInterrupt:
             print "Caught KeyboardInterrupt"
             print "Closing sockets"
             self.close_sockets()
+    
+    def process_received_data(self, sock):
+        """
+        """
+        data = sock.recv(self.buff_size)
+        message_type = data.split(" ", 1)[0]
+        # If Socket closed
+        if not data:
+            sock.close()
+            print "Socket connection lost - Exiting BarryBot"
+            sys.exit()
+
+        print "SERVER PORT :", data
+        msg2_regex = re.compile("[0-5]MSG")
+        print("Message Type: %s" % message_type)
+
+        # Add more message types here
+        if message_type == "INVITE":
+            self.accept(sock, data)
+        elif message_type == "MSG":  # Keeping MSG for debugging
+            self.msg(sock, data)
+        elif msg2_regex.match(message_type):
+            kind, sender, content = data.split(" ", 2)
+            if "ENCRYPT" in content.upper() and len(content) <= 9:
+                self.encrypt(sock, sender)
+            else:
+                data = "BarryBot5 (via channel): " + data
+                sock.send("0MSG " + sender + " " + content + "\n")
+        else:
+            print "Unknown Message type"
 
     def close_sockets(self):
         for sk in self.socklst:
             sk.close()
-
 
     def accept(self, sock, data):
         print "Accepting invite :", data
@@ -183,7 +175,7 @@ def padLeftZeros(string, multiple):
     '''
     while len(string) % multiple != 0:
         string = '0' + string
-    return s
+    return string
 
 def getRandText():
     starti = random.randint(0, len(TEXT_PIECE) - KEY_LEN)
@@ -191,5 +183,5 @@ def getRandText():
 # end of getRandText function
 
 if __name__ == '__main__':
-    BarryBot().main_loop()
+    BarryBot().monitor_sockets()
 
