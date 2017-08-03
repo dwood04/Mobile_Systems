@@ -1,9 +1,10 @@
 # ----- ----- ----- ----- ----- ----- ----- ----
 # BarryBot5 client for COMP28512 Mobile Systems
-# Contributions by: Andrew Leeming, Danny Wood and
+# Contributions by: 
 # Andrew Leeming
 # Danny Wood
 # Robert James
+# Thanks to Igor Wodiany for his corrections
 # ----- ----- ----- ----- ----- ----- ----- ----
 from socket import socket, AF_INET, SOCK_STREAM
 import select
